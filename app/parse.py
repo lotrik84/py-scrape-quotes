@@ -1,12 +1,16 @@
+import asyncio
 import csv
 import logging
 import sys
 from dataclasses import dataclass, astuple, fields
 import os
+import datetime
 from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup, Tag
+
+import author_parse
 
 BASE_URL = "https://quotes.toscrape.com/"
 PATH_TO_LOGS = os.path.join("..", "logs")
@@ -35,6 +39,9 @@ logging.basicConfig(
     ],
 )
 
+httpx_logger = logging.getLogger("httpx")
+httpx_logger.setLevel(logging.WARNING)
+
 
 def parse_single_quote(quote_soup: Tag) -> Quote:
     return Quote(
@@ -45,6 +52,9 @@ def parse_single_quote(quote_soup: Tag) -> Quote:
 
 
 def parse_page_with_quotes(quotes_soup: BeautifulSoup) -> [Quote]:
+    for author in quotes_soup.select(".quote"):
+        asyncio.run(author_parse.parse_single_author(author))
+
     return [
         parse_single_quote(quote) for quote in quotes_soup.select(".quote")
     ]
@@ -66,11 +76,11 @@ def main(output_csv_path: str) -> None:
 
     page_number = 2
     while True:
-        logging.info(f"Parsing page #{page_number}")
         page = requests.get(urljoin(BASE_URL, f"/page/{page_number}")).content
         soup = BeautifulSoup(page, "html.parser")
 
         if not soup.text.__contains__("No quotes found!"):
+            logging.info(f"Parsing page #{page_number}")
             all_quotes.extend(parse_page_with_quotes(soup))
             page_number += 1
         else:
@@ -80,4 +90,7 @@ def main(output_csv_path: str) -> None:
 
 
 if __name__ == "__main__":
+    start = datetime.datetime.now()
     main("quotes.csv")
+    end = datetime.datetime.now()
+    print(end - start)
