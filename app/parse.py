@@ -4,7 +4,6 @@ import logging
 import sys
 from dataclasses import dataclass, astuple, fields
 import os
-import datetime
 from urllib.parse import urljoin
 
 import requests
@@ -60,15 +59,15 @@ def parse_page_with_quotes(quotes_soup: BeautifulSoup) -> [Quote]:
     ]
 
 
-def save_quotes_to_csv(quotes: [Quote], file: str) -> None:
-    with open(file, "w") as csv_file:
+def save_quotes_to_csv(quotes: [Quote], quotes_file: str) -> None:
+    with open(quotes_file, "w") as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(QUOTE_FIELDS)
         writer.writerows([astuple(quote) for quote in quotes])
 
 
 def main(output_csv_path: str) -> None:
-    logging.info(f"Parsing page #1")
+    logging.info("Parsing page #1")
     page = requests.get(BASE_URL).content
     first_page_soup = BeautifulSoup(page, "html.parser")
 
@@ -90,7 +89,4 @@ def main(output_csv_path: str) -> None:
 
 
 if __name__ == "__main__":
-    start = datetime.datetime.now()
     main("quotes.csv")
-    end = datetime.datetime.now()
-    print(end - start)
