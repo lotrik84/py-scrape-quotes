@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup, Tag
 
-import author_parse
+import app.author_parse as author_parse
 
 BASE_URL = "https://quotes.toscrape.com/"
 PATH_TO_LOGS = os.path.join("..", "logs")
